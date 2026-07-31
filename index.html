@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeloAI | Velotech</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#212121] text-gray-100 font-sans antialiased h-screen flex overflow-hidden">
+
+    <!-- Name Gate Modal Overlay -->
+    <div id="name-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-[#171717] border border-gray-800 p-6 sm:p-8 rounded-2xl w-full max-w-md shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 rounded-full bg-cyan-600 flex items-center justify-center font-bold text-xl text-black mx-auto">V</div>
+                <h2 class="text-xl font-bold text-gray-100">Welcome to VeloAI</h2>
+                <p class="text-xs text-gray-400">Please enter your name to unlock the chat interface.</p>
+            </div>
+            <form id="name-form" onsubmit="handleNameSubmit(event)" class="space-y-4">
+                <input type="text" id="username-input" placeholder="Enter your name..." required autocomplete="off"
+                    class="w-full bg-[#212121] border border-gray-700/60 rounded-xl p-3 text-gray-100 placeholder-gray-500 text-sm focus:outline-none focus:border-cyan-500 transition">
+                <button type="submit" class="w-full bg-cyan-500 text-black py-3 rounded-xl font-bold hover:bg-cyan-400 transition text-sm">
+                    Enter VeloAI
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar / ChatGPT-style Panel -->
+    <aside id="sidebar" class="w-64 bg-[#171717] flex flex-col justify-between p-3 border-r border-[#2f2f2f] transition-all duration-300 z-20">
+        <div class="space-y-4 flex-1 overflow-hidden flex flex-col">
+            <!-- Top Controls: New Chat & Toggle Sidebar -->
+            <div class="flex items-center gap-2">
+                <button onclick="newChat()" class="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-700/50 hover:bg-gray-800 text-sm font-medium transition">
+                    <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    New chat
+                </button>
+                <button onclick="toggleSidebar()" title="Close Sidebar" class="p-2.5 rounded-lg border border-gray-700/50 hover:bg-gray-800 text-gray-400 hover:text-white transition">
+                    <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                </button>
+            </div>
+
+            <!-- Recent Chats Header & Dynamic List Container -->
+            <div class="text-xs text-gray-500 font-semibold px-3 uppercase tracking-wider pt-2">Recent Chats</div>
+            <div id="chat-history-list" class="space-y-1 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+                <div class="px-3 py-2 text-sm text-gray-400 italic">No previous chats yet</div>
+            </div>
+        </div>
+
+        <!-- Bottom Profile Section with User's Name -->
+        <div class="border-t border-gray-800 pt-3 mt-2">
+            <div class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-200 bg-gray-800/40 rounded-lg">
+                <div id="sidebar-initial" class="w-7 h-7 rounded-full bg-cyan-600 flex items-center justify-center font-bold text-xs text-black">U</div>
+                <div class="truncate">
+                    <div class="text-xs text-gray-400">User</div>
+                    <div id="sidebar-username" class="text-sm font-semibold text-gray-200 truncate">Pending...</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Chat Window Area -->
+    <main class="flex-1 flex flex-col justify-between h-full bg-[#212121] relative">
+
+        <!-- Top Navigation Bar -->
+        <header class="h-14 border-b border-gray-800/50 flex items-center justify-between px-4 bg-[#212121]/80 backdrop-blur z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" id="sidebar-toggle-btn" class="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition" title="Toggle Sidebar">
+                    <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                </button>
+                <span class="font-semibold text-gray-200 text-base">VeloAI</span>
+                <span class="text-xs bg-gray-800 text-cyan-400 px-2 py-0.5 rounded-md font-mono">v21.0</span>
+            </div>
+            <div class="text-xs text-gray-400 hidden sm:block">
+                Founder: <span class="text-white font-medium">Atreya</span> | Co-Founder: <span class="text-white font-medium">Ruthwik Reddy</span> | CEO: <span class="text-white font-medium">Aditya</span>
+            </div>
+        </header>
+
+        <!-- Chat Messages Container -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+            <!-- Initial Greeting -->
+            <div class="max-w-3xl mx-auto flex gap-4 message-row">
+                <div class="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center font-bold text-sm shrink-0 text-black">V</div>
+                <div class="space-y-3 text-gray-200 leading-relaxed text-sm sm:text-base">
+                    <p>Welcome to VeloAI, How can I Help you today?</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input Form Container -->
+        <div class="p-4 bg-[#212121] border-t border-gray-800/40">
+            <div class="max-w-3xl mx-auto">
+                <form id="chat-form" onsubmit="handleChatSubmit(event)" class="relative bg-[#2f2f2f] rounded-2xl border border-gray-700/50 shadow-lg focus-within:border-gray-500 transition">
+                    <textarea id="chat-input" rows="1" placeholder="Please enter your name first..." disabled required
+                        class="w-full bg-transparent text-gray-100 placeholder-gray-500 text-sm sm:text-base p-4 pr-14 focus:outline-none resize-none max-h-36 opacity-50 cursor-not-allowed"
+                        onkeydown="handleKeyDown(event)"></textarea>
+                    <button type="submit" id="submit-btn" disabled class="absolute right-3 bottom-3 bg-cyan-500 text-black p-2 rounded-xl transition opacity-40 font-bold cursor-not-allowed">
+                        <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </form>
+                <div class="text-center text-xs text-gray-500 mt-2">
+                    VeloAI Core. Velotech.
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Inline JavaScript with Name Gate & Chat Management -->
+    <script>
+        let userName = "";
+        let chatSessions = [];
+        let currentChatId = null;
+        let conversationHistory = [];
+        const API_KEY = "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";
+
+        function handleNameSubmit(event) {
+            event.preventDefault();
+            const inputVal = document.getElementById('username-input').value.trim();
+            if (!inputVal) return;
+
+            userName = inputVal;
+
+            // Update Sidebar Bottom Profile
+            document.getElementById('sidebar-username').textContent = userName;
+            document.getElementById('sidebar-initial').textContent = userName.charAt(0).toUpperCase();
+
+            // Hide Modal
+            document.getElementById('name-modal').classList.add('hidden');
+
+            // Enable Text Area and Submit Button
+            const chatInput = document.getElementById('chat-input');
+            const submitBtn = document.getElementById('submit-btn');
+
+            chatInput.disabled = false;
+            chatInput.placeholder = "Ask any question... (Press Enter to send, Shift + Enter for new line)";
+            chatInput.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+            submitBtn.classList.add('hover:bg-cyan-400');
+
+            chatInput.focus();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+
+        function newChat() {
+            if (!userName) return;
+            currentChatId = 'chat_' + Date.now();
+            conversationHistory = [];
+            document.getElementById('chat-messages').innerHTML = `
+                <div class="max-w-3xl mx-auto flex gap-4 message-row">
+                    <div class="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center font-bold text-sm shrink-0 text-black">V</div>
+                    <div class="space-y-3 text-gray-200 leading-relaxed text-sm sm:text-base">
+                        <p>Welcome to VeloAI, How can I Help you today?</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                document.getElementById('chat-form').requestSubmit();
+            }
+        }
+
+        async function handleChatSubmit(event) {
+            event.preventDefault();
+            if (!userName) return;
+
+            const inputField = document.getElementById('chat-input');
+            const chatMessages = document.getElementById('chat-messages');
+            const prompt = inputField.value.trim();
+            if (!prompt) return;
+
+            if (!currentChatId) {
+                currentChatId = 'chat_' + Date.now();
+                chatSessions.unshift({ id: currentChatId, title: prompt, history: [] });
+            } else {
+                let existing = chatSessions.find(s => s.id === currentChatId);
+                if (!existing) {
+                    chatSessions.unshift({ id: currentChatId, title: prompt, history: [] });
+                }
+            }
+
+            conversationHistory.push({ role: "user", content: prompt });
+            updateSidebarHistory();
+
+            // Append User Message UI (with user's initial avatar)
+            const userRow = document.createElement('div');
+            userRow.className = "max-w-3xl mx-auto flex gap-4 justify-end message-row";
+            userRow.innerHTML = `
+                <div class="bg-[#2f2f2f] text-gray-100 p-4 rounded-2xl max-w-[85%] text-sm sm:text-base leading-relaxed whitespace-pre-wrap">${escapeHtml(prompt)}</div>
+                <div class="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center font-bold text-sm shrink-0 text-black">${userName.charAt(0).toUpperCase()}</div>
+            `;
+            chatMessages.appendChild(userRow);
+
+            inputField.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Append AI Response Container placeholder
+            const aiRow = document.createElement('div');
+            aiRow.className = "max-w-3xl mx-auto flex gap-4 message-row";
+            aiRow.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center font-bold text-sm shrink-0 text-black">V</div>
+                <div class="text-gray-200 text-sm sm:text-base leading-relaxed space-y-3 w-full ai-content whitespace-pre-wrap">Thinking...</div>
+            `;
+            chatMessages.appendChild(aiRow);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            const contentDiv = aiRow.querySelector('.ai-content');
+
+            // Fetch live answer via Groq API, passing user's name in system prompt
+            const finalAnswer = await fetchUniversalAnswer(prompt);
+            conversationHistory.push({ role: "assistant", content: finalAnswer });
+            
+            contentDiv.textContent = finalAnswer;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function updateSidebarHistory() {
+            const listContainer = document.getElementById('chat-history-list');
+            
+            let sessionObj = chatSessions.find(s => s.id === currentChatId);
+            if (sessionObj && listContainer.innerHTML.includes('No previous chats yet')) {
+                listContainer.innerHTML = '';
+            }
+
+            listContainer.innerHTML = '';
+            chatSessions.slice(0, 10).forEach(session => {
+                const item = document.createElement('div');
+                item.className = `px-3 py-2 text-sm text-gray-300 hover:bg-gray-800/80 rounded-lg cursor-pointer truncate transition ${session.id === currentChatId ? 'bg-gray-800 font-medium text-white' : ''}`;
+                item.textContent = session.title;
+                item.onclick = () => loadChatSession(session.id);
+                listContainer.appendChild(item);
+            });
+        }
+
+        function loadChatSession(sessionId) {
+            currentChatId = sessionId;
+            const session = chatSessions.find(s => s.id === sessionId);
+            if (!session) return;
+
+            conversationHistory = [...session.history];
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = `
+                <div class="max-w-3xl mx-auto flex gap-4 message-row">
+                    <div class="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center font-bold text-sm shrink-0 text-black">V</div>
+                    <div class="space-y-3 text-gray-200 leading-relaxed text-sm sm:text-base">
+                        <p>Loaded session: <strong>${escapeHtml(session.title)}</strong></p>
+                    </div>
+                </div>
+            `;
+            updateSidebarHistory();
+        }
+
+        async function fetchUniversalAnswer(prompt) {
+            try {
+                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${API_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [
+                            { role: "system", content: `You are VeloAI, a universal assistant built for Velotech. The user you are talking to is named ${userName}. Address them by their name when appropriate.` },
+                            ...conversationHistory
+                        ]
+                    })
+                });
+
+                const data = await response.json();
+                if (data.choices && data.choices.length > 0) {
+                    return data.choices[0].message.content;
+                } else if (data.error) {
+                    return `API Error: ${data.error.message}`;
+                } else {
+                    return "Error: No response received from the network.";
+                }
+            } catch (error) {
+                return "Network connection error. Check your internet connection.";
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+    </script>
+</body>
+</html>
